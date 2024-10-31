@@ -33,15 +33,27 @@ def read_csv_data(csv_file_path):
 def parse_days(days_str):
     days = []
     parts = [part.strip() for part in days_str.split(',')]
+    day_order = list(DAY_ABBREVIATIONS.keys())
     for part in parts:
         # Handle ranges like 'Mon-Fri'
         if '-' in part:
-            start_day, end_day = [d.strip() for d in part.split('-')]
-            start_index = list(DAY_ABBREVIATIONS.keys()).index(start_day[:3])
-            end_index = list(DAY_ABBREVIATIONS.keys()).index(end_day[:3])
-            for i in range(start_index, end_index + 1):
-                day_abbr = list(DAY_ABBREVIATIONS.keys())[i]
-                days.append(DAY_ABBREVIATIONS[day_abbr])
+            start_day_abbr, end_day_abbr = [d.strip()[:3] for d in part.split('-')]
+            try:
+                start_index = day_order.index(start_day_abbr)
+                end_index = day_order.index(end_day_abbr)
+            except ValueError:
+                continue  # Skip if day abbreviation is invalid
+            # Handle wrap-around weeks
+            if end_index < start_index:
+                # The range wraps around the week
+                indices = list(range(start_index, len(day_order))) + list(range(0, end_index + 1))
+            else:
+                indices = range(start_index, end_index + 1)
+            for i in indices:
+                day_abbr = day_order[i]
+                day_full = DAY_ABBREVIATIONS.get(day_abbr)
+                if day_full:
+                    days.append(day_full)
         else:
             single_day = DAY_ABBREVIATIONS.get(part[:3])
             days.append(single_day) if single_day else None
